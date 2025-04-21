@@ -10,6 +10,12 @@
 
 (provide value-of-program value-of)
 
+;; Helper function for Greatest Common Divisor (GCD)
+(define (gcd a b)
+  (if (= b 0)
+      (abs a) ; GCD is defined for non-negative numbers, take abs for safety
+      (gcd b (remainder a b))))
+
 ;;;;;;;;;;;;;;;; the interpreter ;;;;;;;;;;;;;;;;
 
 ;; value-of-program : Program -> ExpVal
@@ -30,47 +36,66 @@
 
       (var-exp (var) (apply-env env var))
       
-      (op-exp (exp1 exp2 op)
+      (op-exp (exp1 exp2 num) ; Updated op-exp with division and subtraction
               (let ((val1 (value-of exp1 env))
                     (val2 (value-of exp2 env)))
-                  (let ((num1 (expval->rational val1))
-                        (num2 (expval->rational val2)))
+                (let ((eval1 (expval->rational val1))
+                      (eval2 (expval->rational val2)))
+                  (cond
+                    ;; Case 1: Both are numbers
+                    ((and (number? eval1) (number? eval2))
+                     (num-val 
                       (cond 
-                        ((and (number? num1) (number? num2))
-                          (num-val
-                            (cond 
-                              ((= op 1) (+ num1 num2))
-                              ((= op 2) (* num1 num2))
-                              )))
-                        
-                        ((and (number? num1) (not (number? num2)))
-                          (rational-val
-                          (let ((num2top (car num2))
-                                (num2bot (cdr num2)))
-                            (cond 
-                              ((= op 1) (cons (+ (* num1 num2bot) num2top) num2bot))
-                              ((= op 2) (cons (* num1 num2top) num2bot))
-                              ))))
+                        ((= num 1) (+ eval1 eval2))      ; Add
+                        ((= num 2) (* eval1 eval2))      ; Multiply
+                        ((= num 3)                      ; Divide
+                         (if (zero? eval2)
+                             (eopl:error 'value-of "Division by zero: ~s / ~s" eval1 eval2)
+                             (/ eval1 eval2))) ; Racket's / handles rationals if needed, but let's stick to pairs
+                        (else (- eval1 eval2)))))     ; Subtract (default)
+                    
+                    ;; Case 2: First is number, second is rational
+                    ((and (number? eval1) (pair? eval2))
+                     (let ((n2 (car eval2)) (d2 (cdr eval2)))
+                       (rational-val
+                        (cond 
+                          ((= num 1) (cons (+ (* eval1 d2) n2) d2)) ; Add: n1 + n2/d2 = (n1*d2 + n2)/d2
+                          ((= num 2) (cons (* eval1 n2) d2))      ; Multiply: n1 * (n2/d2) = (n1*n2)/d2
+                          ((= num 3)                      ; Divide: n1 / (n2/d2) = (n1*d2)/n2
+                           (if (zero? n2)
+                               (eopl:error 'value-of "Division by zero in rational: ~s / (~s/~s)" eval1 n2 d2)
+                               (cons (* eval1 d2) n2)))
+                          (else (cons (- (* eval1 d2) n2) d2)))))) ; Subtract: n1 - n2/d2 = (n1*d2 - n2)/d2
+                    
+                    ;; Case 3: First is rational, second is number
+                    ((and (pair? eval1) (number? eval2))
+                     (let ((n1 (car eval1)) (d1 (cdr eval1)))
+                       (rational-val
+                        (cond 
+                          ((= num 1) (cons (+ n1 (* eval2 d1)) d1)) ; Add: n1/d1 + n2 = (n1 + n2*d1)/d1
+                          ((= num 2) (cons (* n1 eval2) d1))      ; Multiply: (n1/d1) * n2 = (n1*n2)/d1
+                          ((= num 3)                      ; Divide: (n1/d1) / n2 = n1/(d1*n2)
+                           (if (zero? eval2)
+                               (eopl:error 'value-of "Division by zero: (~s/~s) / ~s" n1 d1 eval2)
+                               (cons n1 (* d1 eval2))))
+                          (else (cons (- n1 (* eval2 d1)) d1)))))) ; Subtract: n1/d1 - n2 = (n1 - n2*d1)/d1
+                    
+                    ;; Case 4: Both are rational
+                    ((and (pair? eval1) (pair? eval2))
+                     (let ((n1 (car eval1)) (d1 (cdr eval1))
+                           (n2 (car eval2)) (d2 (cdr eval2)))
+                       (rational-val
+                        (cond 
+                          ((= num 1) (cons (+ (* n1 d2) (* n2 d1)) (* d1 d2))) ; Add: n1/d1 + n2/d2 = (n1*d2 + n2*d1)/(d1*d2)
+                          ((= num 2) (cons (* n1 n2) (* d1 d2)))      ; Multiply: (n1/d1) * (n2/d2) = (n1*n2)/(d1*d2)
+                          ((= num 3)                      ; Divide: (n1/d1) / (n2/d2) = (n1*d2)/(d1*n2)
+                           (if (or (zero? n2) (zero? d1)) ; Check potential division by zero in result denominator
+                               (eopl:error 'value-of "Division by zero in rational division: (~s/~s) / (~s/~s)" n1 d1 n2 d2)
+                               (cons (* n1 d2) (* d1 n2))))
+                          (else (cons (- (* n1 d2) (* n2 d1)) (* d1 d2))))))) ; Subtract: n1/d1 - n2/d2 = (n1*d2 - n2*d1)/(d1*d2)
+                    
+                    (else (eopl:error 'value-of "op-exp requires numbers or rationals, got ~s and ~s" val1 val2)))))
 
-                        ((and (number? num2) (not (number? num1)))
-                          (rational-val
-                          (let ((num1top (car num1))
-                                (num1bot (cdr num1)))
-                            (cond 
-                              ((= op 1) (cons (+ (* num1bot num2) num1top) num1bot))
-                              ((= op 2) (cons (* num1top num2) num1bot))
-                              ))))
-
-                        (else
-                          (rational-val
-                          (let ((num1top (car num1))
-                                (num1bot (cdr num1))
-                                (num2top (car num2))
-                                (num2bot (cdr num2)))
-                            (cond 
-                              ((= op 1) (cons (+ (* num1top num2bot) (* num1bot num2top)) (* num1bot num2bot))) ;; add
-                              ((= op 2) (cons (* num1top num2top) (* num1bot num2bot))) ;; multiply
-                            ))))))))
       (zero?-exp (exp1) ; Updated zero?-exp for rationals
                  (let ((val1 (value-of exp1 env)))
                    (let ((eval1 (expval->rational val1)))
@@ -114,41 +139,6 @@
                         (eopl:error 'value-of "Denominator cannot be zero in rational number: ~s/~s" num1 num2)
                         (rational-val (cons num1 num2)))) ; Use cons to create the pair
 
-      (op-exp (exp1 exp2 num) ; Updated op-exp based on image syntax
-              (let ((val1 (value-of exp1 env))
-                    (val2 (value-of exp2 env)))
-                (let ((eval1 (expval->rational val1))
-                      (eval2 (expval->rational val2)))
-                  (cond
-                    ;; Case 1: Both are numbers
-                    ((and (number? eval1) (number? eval2))
-                     (num-val (cond ((= num 1) (+ eval1 eval2))      ; Add
-                                    ((= num 2) (* eval1 eval2))      ; Multiply
-                                    (else (eopl:error 'value-of "Unknown op number: ~s" num)))))
-                    ;; Case 2: First is number, second is rational
-                    ((and (number? eval1) (pair? eval2))
-                     (let ((n2 (car eval2)) (d2 (cdr eval2)))
-                       (rational-val
-                        (cond ((= num 1) (cons (+ (* eval1 d2) n2) d2)) ; Add: n1 + n2/d2 = (n1*d2 + n2)/d2
-                              ((= num 2) (cons (* eval1 n2) d2))      ; Multiply: n1 * (n2/d2) = (n1*n2)/d2
-                              (else (eopl:error 'value-of "Unknown op number: ~s" num))))))
-                    ;; Case 3: First is rational, second is number
-                    ((and (pair? eval1) (number? eval2))
-                     (let ((n1 (car eval1)) (d1 (cdr eval1)))
-                       (rational-val
-                        (cond ((= num 1) (cons (+ n1 (* eval2 d1)) d1)) ; Add: n1/d1 + n2 = (n1 + n2*d1)/d1
-                              ((= num 2) (cons (* n1 eval2) d1))      ; Multiply: (n1/d1) * n2 = (n1*n2)/d1
-                              (else (eopl:error 'value-of "Unknown op number: ~s" num))))))
-                    ;; Case 4: Both are rational
-                    ((and (pair? eval1) (pair? eval2))
-                     (let ((n1 (car eval1)) (d1 (cdr eval1))
-                           (n2 (car eval2)) (d2 (cdr eval2)))
-                       (rational-val
-                        (cond ((= num 1) (cons (+ (* n1 d2) (* n2 d1)) (* d1 d2))) ; Add: n1/d1 + n2/d2 = (n1*d2 + n2*d1)/(d1*d2)
-                              ((= num 2) (cons (* n1 n2) (* d1 d2)))      ; Multiply: (n1/d1) * (n2/d2) = (n1*n2)/(d1*d2)
-                              (else (eopl:error 'value-of "Unknown op number: ~s" num))))))
-                    (else (eopl:error 'value-of "op-exp requires numbers or rationals, got ~s and ~s" val1 val2)))))
-
       (min-exp (lst-exp) ; Added min-exp handler
                (let ((lst-val (value-of lst-exp env)))
                  (let ((lst (expval->list lst-val)))
@@ -169,4 +159,17 @@
                                (value-of exp4 env)
                                (value-of exp5 env))))))
 
-      ))))))
+      (simpl-exp (exp1)
+                 (let ((val1 (value-of exp1 env)))
+                   (cases expval val1
+                     (num-val (num) val1) ; Numbers are already simple
+                     (rational-val (p)
+                                   (let ((n (car p))
+                                         (d (cdr p)))
+                                     (if (zero? d)
+                                         (eopl:error 'value-of "Cannot simplify rational with zero denominator: ~s/~s" n d)
+                                         (let ((common (gcd n d)))
+                                           (rational-val (cons (/ n common) (/ d common)))))))
+                     (else (eopl:error 'value-of "simpl-exp requires a number or rational, got ~s" val1)))))
+
+      ))))
