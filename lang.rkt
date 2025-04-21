@@ -37,11 +37,11 @@
      ("let" identifier "=" expression "in" expression)
      let-exp)   
 
+
     ;; -----------------------
     ;; INSERT YOUR CODE HERE 
-    ;; -----------------------
-
-
+    ;; Add the list-exp rule
+    (expression ("create-new-list") list-exp)
     ;; -----------------------
 ))
 
