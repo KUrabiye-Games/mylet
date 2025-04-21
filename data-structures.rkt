@@ -13,9 +13,13 @@
    (value number?))
   (bool-val
    (boolean boolean?))
-  
+
   ;; -----------------------
-  ;; INSERT YOUR CODE HERE 
+  (list-val
+   (lst list?))
+  ;; Changed rational-val to store a pair (numerator . denominator)
+  (rational-val
+   (pair pair?))
   ;; -----------------------
 
   ;; -----------------------
@@ -31,11 +35,23 @@
       (num-val (num) num)
       (else (expval-extractor-error 'num v)))))
 
-;; -----------------------
-;; INSERT YOUR CODE HERE 
-;; -----------------------
+;; expval->rational : ExpVal -> (union Int Pair)
+;; Extracts number or rational pair (num . den)
+(define expval->rational
+  (lambda (v)
+    (cases expval v
+      (num-val (num) num)
+      (rational-val (p) p) ; Return the pair directly
+      (else (expval-extractor-error 'rational v)))))
 
 ;; -----------------------
+
+;; expval->list : ExpVal -> List
+(define expval->list
+  (lambda (v)
+    (cases expval v
+      (list-val (lst) lst)
+      (else (expval-extractor-error 'list v)))))
 
 ;; expval->bool : ExpVal -> Bool
 ;; Page: 70
