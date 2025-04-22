@@ -67,10 +67,17 @@
        ("proc" "(" identifier ")" expression)
        proc-exp)
 
+    ;; Modified call-exp to support f(x) syntax
     (expression
-       ("(" expression expression ")")
+       (identifier "(" expression ")")
        call-exp)
-    
+
+       
+    (expression
+        ("letrec"
+          identifier "(" identifier ")" "=" expression
+           "in" expression)
+        letrec-exp)
     ;; -----------------------
 
 ))
