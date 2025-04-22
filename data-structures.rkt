@@ -7,6 +7,22 @@
 ;;;;;;;;;;;;;;;; expressed values ;;;;;;;;;;;;;;;;
 
 ;;; an expressed value is either a number, a boolean or a procval.
+;;; The define-datatype form in the #lang eopl language is used to define 
+;;; algebraic data types (also known as sum types or tagged unions). 
+
+#|
+(define-datatype type-name type-predicate?
+  (variant-1
+    (field-1-1 predicate-1-1?)
+    (field-1-2 predicate-1-2?)
+    ...)
+  (variant-2
+    (field-2-1 predicate-2-1?)
+    ...)
+  ...)
+|#
+
+
 
 (define-datatype expval expval?
   (num-val
@@ -21,6 +37,10 @@
   (rational-val
    (pair pair?))
   ;; -----------------------
+
+  (proc-val 
+      (proc procedure?))
+
 
   ;; -----------------------
 )
@@ -60,6 +80,17 @@
     (cases expval v
       (bool-val (bool) bool)
       (else (expval-extractor-error 'bool v)))))
+
+
+  
+
+;; expval->proc : ExpVal -> Proc
+;; Page: 70
+(define expval->proc
+  (lambda (v)
+    (cases expval v
+      (proc-val (proc) proc)
+      (else (expval-extractor-error 'proc v)))))  
 
 (define expval-extractor-error
   (lambda (variant value)

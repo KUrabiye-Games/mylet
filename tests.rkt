@@ -89,33 +89,32 @@
 
 ;; rational number test
 
- (simple-rat-def "(5 / 2)"  (5 . 2))
- (simple-rat-def2 "(5 / 0)" error)
+ (simple-rat-def "rational(5/2)"  (5 . 2))
+ (simple-rat-def2 "rational(5/0)" error)
 
- (rat-op-test-sum1 "op((5 / 2), (3 / 5), 1)" (31 . 10))
- (rat-op-test-sum2 "op((5 / 2), 4, 1)" (13 . 2))
- (rat-op-test-sum3 "op(3, (3 / 5), 1)" (18 . 5))
+ (rat-op-test-sum1 "op(rational(5/2), rational(3/5), 1)" (31 . 10))
+ (rat-op-test-sum2 "op(rational(5/2), 4, 1)" (13 . 2))
+ (rat-op-test-sum3 "op(3, rational(3/5), 1)" (18 . 5))
  
- (rat-op-test-mult1 "op((5 / 2), (3 / 5), 2)" (15 . 10))
- (rat-op-test-mult2 "op((5 / 2), 4, 2)" (20 . 2))
- (rat-op-test-mult3 "op(3, (3 / 5), 2)" (9 . 5))
+ (rat-op-test-mult1 "op(rational(5/2), rational(3/5), 2)" (15 . 10))
+ (rat-op-test-mult2 "op(rational(5/2), 4, 2)" (20 . 2))
+ (rat-op-test-mult3 "op(3, rational(3/5), 2)" (9 . 5))
  
- (rat-op-test-div1 "op((5 / 2), (3 / 5), 3)" (25 . 6))
- (rat-op-test-div2 "op((5 / 2), 4, 3)" (5 . 8))
- (rat-op-test-div3 "op(3, (3 / 5), 3)" (15 . 3))
+ (rat-op-test-div1 "op(rational(5/2), rational(3/5), 3)" (25 . 6))
+ (rat-op-test-div2 "op(rational(5/2), 4, 3)" (5 . 8))
+ (rat-op-test-div3 "op(3, rational(3/5), 3)" (15 . 3))
 
- (rat-op-test-diff1 "op((5 / 2), (3 / 5), 5)" (19 . 10))
- (rat-op-test-diff2 "op((5 / 2), 4, -1)" (-3 . 2))
- (rat-op-test-diff3 "op(3, (3 / 5), 10)" (12 . 5))
+ (rat-op-test-diff1 "op(rational(5/2), rational(3/5), 5)" (19 . 10))
+ (rat-op-test-diff2 "op(rational(5/2), 4, -1)" (-3 . 2))
+ (rat-op-test-diff3 "op(3, rational(3/5), 10)" (12 . 5))
 
- (rat-op-test-simpl1 "simpl((10 / 4))" (5 . 2))
- (rat-op-test-simpl2 "simpl((10 / 3))" (10 . 3))
- (rat-op-test-simpl3 "simpl((5 / 25))" (1 . 5))
+ (rat-op-test-simpl1 "simpl(rational(10/4))" (5 . 2))
+ (rat-op-test-simpl2 "simpl(rational(10/3))" (10 . 3))
+ (rat-op-test-simpl3 "simpl(rational(5/25))" (1 . 5))
 
- (rat-op-test-simpl-mult "simpl(op((5 / 2), 4, 2))" (10 . 1))
+ (rat-op-test-simpl-mult "simpl(op(rational(5/2), 4, 2))" (10 . 1))
 
  (new-list-test1 "create-new-list()" ())
-
 
 
  (new-list-test2 "cons 5 to create-new-list()" (5))
@@ -133,5 +132,11 @@
  (min-test2 "min (cons 8 to cons 13 to cons 5 to create-new-list())" 5)
  (min-test3 "min (cons 2000 to cons 2000 to cons 2000 to create-new-list())" 2000)
  (min-test4 "min (cons 139 to create-new-list())" 139)  #||#
+
+
+ (if-else-if-rand "if zero?(0) then 1 elif zero?(3) then 2 else 3" 1)
+ (if-else-if-rand2 "if zero?(-5) then 1 elif zero?(2) then 2 elif zero?(0) then 7 else 3" 7)
+
+
 
 )
