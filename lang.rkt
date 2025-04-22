@@ -56,8 +56,6 @@
     ;; that handles if-statements with optional elif clauses
     (expression ("if" expression "then" expression (arbno "elif" expression "then" expression) "else" expression) if-exp-with-elifs)
     
-    ;; Add the var-exp rule based on image
-    (expression (identifier) var-exp)
     ;; Add the simpl-exp rule
     (expression ("simpl" "(" expression ")") simpl-exp)
     ;; Add support for the -(x,y) expression syntax
@@ -67,11 +65,13 @@
        ("proc" "(" identifier ")" expression)
        proc-exp)
 
-    ;; Modified call-exp to support f(x) syntax
+    ;; Modified call-exp to support function call syntax
     (expression
-       (identifier "(" expression ")")
+       ("(" expression expression ")")
        call-exp)
 
+    ;; Add the var-exp rule based on image - moved lower in the grammar to resolve conflict
+    (expression (identifier) var-exp)
        
     (expression
         ("letrec"

@@ -137,6 +137,88 @@
  (if-else-if-rand "if zero?(0) then 1 elif zero?(3) then 2 else 3" 1)
  (if-else-if-rand2 "if zero?(-5) then 1 elif zero?(2) then 2 elif zero?(0) then 7 else 3" 7)
 
+ ;; Additional test cases for all features
+
+ ;; Additional rational number tests
+ (rational-zero "rational(0/1)" (0 . 1))
+ (rational-negative "rational(-5/2)" (-5 . 2))
+ (rational-nested-op "op(rational(1/2), op(rational(1/3), rational(1/6), 1), 1)" (36 . 36))
+ (rational-complex-simpl "simpl(op(op(rational(2/3), rational(1/6), 1), rational(1/2), 2))" (5 . 12))
 
 
+
+ ;; Additional list tests
+ (list-nested-cons "cons 1 to cons 2 to cons 3 to create-new-list()" (1 2 3))
+ (list-min-negative "min (cons -10 to cons 5 to cons 0 to create-new-list())" -10)
+ (list-mul-one-item "multiplication (cons 42 to create-new-list())" 42)
+ (list-complex-op "multiplication (cons 2 to cons op(3, 1, 4) to create-new-list())" 4)
+
+ ;; Procedure tests
+ (proc-identity "let f = proc (x) x in (f 10)" 10)
+ (proc-add-one "let add1 = proc (x) op(x, 1, 1) in (add1 5)" 6)
+ (proc-compose "let f = proc (x) op(x, 2, 2) in let g = proc (y) op(y, 3, 1) in (f (g 4))" 14)
+ (proc-with-rational "let half = proc (x) op(x, rational(1/2), 2) in simpl((half 10))" (5 . 1))
+
+ ;; Nested if-elif-else tests
+ (if-complex-1 "if zero?(1) then 1 elif zero?(2) then 2 elif zero?(3) then 3 elif zero?(0) then 4 else 5" 4)
+ (if-complex-2 "if zero?(0) then 1 elif zero?(0) then 2 elif zero?(0) then 3 else 4" 1)
+ (if-complex-3 "if zero?(1) then 1 elif zero?(2) then 2 elif zero?(3) then 3 else 4" 4)
+ (if-nested "if zero?(0) then if zero?(1) then 1 else 2 else 3" 2)
+
+ ;; Diff expression tests
+ (diff-simple "-(5, 3)" 2)
+ (diff-negative "-(3, 5)" -2)
+ (diff-rational "-(rational(5/2), rational(1/2))" (8 . 4))
+ (diff-mixed "-(rational(3/2), 1)" (1 . 2))
+
+ #|
+ ;; Letrec tests
+ (letrec-factorial "letrec f(n) = if zero?(n) then 1 else op(n, f(-(n,1)), 2) in f(5)" 120)
+ (letrec-fibonacci "letrec fib(n) = if zero?(n) then 0 elif zero?(-(n,1)) then 1 else op(fib(-(n,1)), fib(-(n,2)), 1) in fib(6)" 8)
+ (letrec-sum-to-n "letrec sum(n) = if zero?(n) then 0 else op(n, sum(-(n,1)), 1) in sum(5)" 15)
+ (letrec-even-odd "letrec even(n) = if zero?(n) then 1 else odd(-(n,1)) 
+                   in letrec odd(n) = if zero?(n) then 0 else even(-(n,1))
+                   in even(4)" 1)
+|#
+
+ ;; Comprehensive mixed tests
+ (comprehensive-1 
+   "let x = 5 in 
+    let f = proc(n) op(n, x, 1) in
+    let x = 10 in
+    (f 3)" 8)
+ 
+ (comprehensive-2 
+   "let make_adder = proc (y) proc(x) op(x, y, 1) in
+    let add5 = (make_adder 5) in
+    (add5 10)" 15)
+
+ (comprehensive-3
+   "let apply_twice = proc(f) proc(x) (f (f x)) in
+    let add1 = proc(x) op(x, 1, 1) in
+    let add2 = (apply_twice add1) in
+    (add2 5)" 7)
+
+ (comprehensive-4
+   "let x = rational(1/2) in
+    let y = rational(1/3) in
+    let z = op(x, y, 1) in
+    simpl(z)" (5 . 6))
+    
+ #|
+ ;; This test requires recursion which is not supported yet
+ (comprehensive-5
+   "let make_list = proc(n) 
+      if zero?(n) then
+        create-new-list()
+      else
+        cons n to (make_list -(n,1))
+    in
+    min((make_list 5))" 1)
+ |#
+
+ (comprehensive-rational-list
+   "let add_half = proc(x) op(x, rational(1/2), 1) in
+    let xs = cons 1 to cons 2 to cons 3 to create-new-list() in
+    multiplication(xs)" 6)
 )
