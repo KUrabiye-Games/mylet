@@ -1,6 +1,7 @@
 #lang eopl
 
 ;; data structures for let-lang.
+(require "lang.rkt") ;; for expression? and other definitions    
 
 (provide (all-defined-out))               ; too many things to list
 
@@ -44,6 +45,14 @@
 
   ;; -----------------------
 )
+
+  ;; proc? : SchemeVal -> Bool
+  ;; procedure : Var * Exp * Env -> Proc
+  (define-datatype proc proc?
+    (procedure
+      (bvar symbol?)
+      (body expression?)
+      (env environment?)))
 
 ;;; extractors:
 
