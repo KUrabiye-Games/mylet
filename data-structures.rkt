@@ -47,10 +47,10 @@
 )
 
   ;; proc? : SchemeVal -> Bool
-  ;; procedure : Var * Exp * Env -> Proc
+  ;; procedure : List-of-Var * Exp * Env -> Proc
   (define-datatype proc proc?
     (procedure
-      (bvar symbol?)
+      (bvars (lambda (vars) (or (symbol? vars) (list? vars)))) ;; Accept a single var or a list of vars
       (body expression?)
       (env environment?)))
 

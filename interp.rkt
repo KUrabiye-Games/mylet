@@ -242,32 +242,47 @@
                       
                       (else (eopl:error 'value-of "diff-exp requires numbers or rationals, got ~s and ~s" val1 val2))))))
                     
-      ;; Handle procedure definition
-      (proc-exp (var body)
-                (proc-val (procedure var body env)))
+      ;; Handle procedure definition with multiple arguments
+      (proc-exp (vars body)
+                (proc-val (procedure vars body env)))
 
-      ;; Handle procedure call
-      (call-exp (rator rand)
+      ;; Handle procedure call with multiple arguments
+      (call-exp (rator rands)
                 (let ((proc (expval->proc (value-of rator env)))
-                      (arg (value-of rand env)))
-                  (apply-procedure proc arg)))
+                      (args (map (lambda (rand) (value-of rand env)) rands)))
+                  (apply-procedure proc args)))
       
       (else (eopl:error 'value-of "Unknown expression type: ~s" exp))
       )))
 
 
- ;; procedure : Var * Exp * Env -> Proc
-  ;; Page: 79
+ ;; procedure : List-of-Var * Exp * Env -> Proc
+  ;; Updated to handle multiple arguments
   (define procedure
-    (lambda (var body env)
-      (lambda (val)
-        (value-of body (extend-env var val env)))))
+    (lambda (vars body env)
+      (if (symbol? vars)
+        ;; Handle single variable for backward compatibility
+        (lambda (vals)
+          (if (list? vals)
+            (if (= (length vals) 1)
+              (value-of body (extend-env vars (car vals) env))
+              (eopl:error 'procedure "Expected 1 argument, got ~s" (length vals)))
+            (value-of body (extend-env vars vals env))))
+        ;; Handle multiple variables
+        (lambda (vals)
+          (if (= (length vars) (length vals))
+            (let loop ((vs vars) (args vals) (e env))
+              (if (null? vs)
+                (value-of body e)
+                (loop (cdr vs) (cdr args) (extend-env (car vs) (car args) e))))
+            (eopl:error 'procedure "Expected ~s arguments, got ~s" 
+                     (length vars) (length vals)))))))
   
-  ;; apply-procedure : Proc * ExpVal -> ExpVal
-  ;; Page: 79
+  ;; apply-procedure : Proc * List-of-ExpVal -> ExpVal
+  ;; Updated to handle multiple arguments
   (define apply-procedure
-    (lambda (proc val)
-      (proc val)))
+    (lambda (proc vals)
+      (proc vals)))
 
 
 

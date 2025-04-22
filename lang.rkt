@@ -62,12 +62,12 @@
     (expression ("-" "(" expression "," expression ")") diff-exp)
 
     (expression
-       ("proc" "(" identifier ")" expression)
+       ("proc" "(" (arbno identifier) ")" expression)
        proc-exp)
 
-    ;; Modified call-exp to support function call syntax
+    ;; Modified call-exp to support multiple arguments in function calls
     (expression
-       ("(" expression expression ")")
+       ("(" expression (arbno expression) ")")
        call-exp)
 
     ;; Add the var-exp rule based on image - moved lower in the grammar to resolve conflict
